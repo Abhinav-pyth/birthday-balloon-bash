@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Birthday Surprise Machine 🎈 — Private, Magical Shareable Links</title>
+<meta name="description" content="Create a magical birthday surprise link. Lock it with a PIN, add confetti and a balloon pop game. 100% private — encrypted in your browser, nothing ever uploaded.">
+<meta property="og:title" content="Birthday Surprise Machine 🎈🎂">
+<meta property="og:description" content="Build a magical birthday link, lock it behind a secret PIN, and let the confetti fly! Encrypted in your browser.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="/og.png"> <!-- TODO: add a real 1200x630 branded image -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#ff5e7d">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎈</text></svg>">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/fredoka@latest/latin-500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/fredoka@latest/latin-600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/nunito@latest/latin-400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/nunito@latest/latin-700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/nunito@latest/latin-800.css">
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{
+  --bg1:#fff1f4; --bg2:#f3e8ff; --bg3:#e0f2fe;
+  --ink:#3b2a4a; --sub:#7c6a8f;
+  --card:#ffffff; --line:#f0e6f6;
+  --accent:#ff5e7d; --accent2:#a15cff;
+  --ok:#16a34a; --warn:#d97706; --bad:#dc2626;
+  --radius:22px;
+  --shadow:0 10px 34px rgba(120,60,160,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Nunito',ui-rounded,'Segoe UI',system-ui,sans-serif;
+  color:var(--ink);
+  background:linear-gradient(160deg,var(--bg1) 0%,var(--bg2) 55%,var(--bg3) 100%);
+  min-height:100dvh;
+  line-height:1.55;
+}
+h1,h2,h3,.ff{font-family:'Fredoka','Nunito',ui-rounded,system-ui,sans-serif}
+button{font-family:inherit}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* ---------- decorative background balloons ---------- */
+.bg-balloons{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.bg-balloons span{position:absolute;bottom:-90px;font-size:44px;opacity:.28;animation:bgRise linear infinite}
+@keyframes bgRise{to{transform:translateY(-115dvh) rotate(12deg)}}
+
+/* ---------- layout ---------- */
+.wrap{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:28px 18px 80px}
+header.hero{text-align:center;padding:26px 10px 10px}
+header.hero h1{font-size:clamp(2rem,6vw,3rem);font-weight:600;background:linear-gradient(90deg,#ff5e7d,#a15cff,#22b8ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.tag{color:var(--sub);max-width:520px;margin:8px auto 14px;font-size:1.05rem}
+.badges{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.badge{background:rgba(255,255,255,.75);border:1px solid var(--line);border-radius:999px;padding:6px 13px;font-size:.8rem;font-weight:700;color:var(--sub);box-shadow:0 2px 8px rgba(120,60,160,.06)}
+
+/* ---------- progress ---------- */
+.progress{position:sticky;top:10px;z-index:50;margin:20px 0 6px;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:999px;padding:10px 14px;box-shadow:var(--shadow)}
+.progress .pills{display:flex;gap:6px;justify-content:space-between;flex-wrap:wrap}
+.pill{flex:1;min-width:74px;border:none;background:transparent;border-radius:999px;padding:7px 4px;font-size:.72rem;font-weight:800;color:var(--sub);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:.25s}
+.pill .dot{width:20px;height:20px;border-radius:50%;background:#ece4f4;color:var(--sub);display:inline-flex;align-items:center;justify-content:center;font-size:.68rem;flex:none;transition:.25s}
+.pill.done .dot{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+.pill.done{color:var(--ink)}
+.pill:hover{background:#f7f0fb}
+.pbar{height:6px;border-radius:99px;background:#f0e8f6;margin-top:8px;overflow:hidden}
+.pbar i{display:block;height:100%;width:0%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s}
+
+/* ---------- cards / sections ---------- */
+section.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px 22px;margin-top:18px;box-shadow:var(--shadow)}
+.card-head{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.card-num{width:34px;height:34px;flex:none;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:.95rem}
+.card-head h2{font-size:1.22rem;font-weight:600}
+.card-head .opt{font-size:.75rem;background:#f3ecfa;color:var(--sub);padding:3px 9px;border-radius:99px;font-weight:800}
+.hint{color:var(--sub);font-size:.88rem;margin:4px 0 14px}
+label.fl{display:block;font-weight:800;font-size:.85rem;margin:12px 0 5px}
+input[type=text],input[type=password],input[type=datetime-local],textarea{
+  width:100%;border:2px solid #ecE3f4;border-radius:14px;padding:12px 14px;font-size:1rem;font-family:inherit;background:#fdfbff;color:var(--ink);transition:.2s;
+}
+input:focus,textarea:focus,button:focus-visible{outline:3px solid rgba(161,92,255,.35);outline-offset:1px;border-color:var(--accent2)}
+textarea{min-height:150px;resize:vertical}
+.field-error{display:none;color:var(--bad);font-size:.82rem;font-weight:700;margin-top:5px}
+.field-error.show{display:block}
+.shake{animation:shake .4s}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+
+/* toolbar */
+.toolbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;align-items:center}
+.tb{border:1.5px solid #ece3f4;background:#fff;border-radius:10px;padding:7px 12px;font-size:.85rem;font-weight:800;cursor:pointer;color:var(--ink);transition:.15s}
+.tb:hover{border-color:var(--accent2);background:#faf5ff;transform:translateY(-1px)}
+.tb b{font-family:Georgia,serif}
+.counter{font-size:.8rem;color:var(--sub);font-weight:700;text-align:right;margin-top:6px}
+.counter.warn{color:var(--warn)}
+.counter.err{color:var(--bad)}
+#emojiRow{display:none;flex-wrap:wrap;gap:4px;margin-top:8px;background:#faf6ff;border:1.5px dashed #e4d4f4;border-radius:12px;padding:8px}
+#emojiRow.open{display:flex}
+#emojiRow button{border:none;background:transparent;font-size:1.35rem;cursor:pointer;padding:4px 6px;border-radius:8px;transition:.15s}
+#emojiRow button:hover{background:#efe0ff;transform:scale(1.25)}
+
+/* pin row */
+.pin-row{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap}
+.pin-row input{flex:1;min-width:150px;letter-spacing:.6em;font-weight:800;font-size:1.25rem;text-align:center}
+.note{background:#f6f0fc;border-left:4px solid var(--accent2);border-radius:10px;padding:10px 13px;font-size:.83rem;color:#5c4a72;margin-top:12px}
+
+/* themes */
+.theme-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:8px}
+.theme-grid input{position:absolute;opacity:0;pointer-events:none}
+.theme-grid label{display:block;border-radius:16px;padding:6px;cursor:pointer;border:3px solid transparent;transition:.2s;text-align:center}
+.theme-grid label .sw{height:64px;border-radius:12px;margin-bottom:7px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
+.theme-grid label .tl{font-weight:800;font-size:.8rem}
+.theme-grid input:checked + label,.theme-grid label.sel{border-color:var(--accent2);background:#faf5ff;transform:translateY(-2px)}
+.theme-grid input:focus-visible + label{outline:3px solid rgba(161,92,255,.4);border-radius:16px}
+
+/* switch + radios */
+.switch-row{display:flex;align-items:center;gap:12px;margin:6px 0 14px}
+.switch{position:relative;width:56px;height:31px;flex:none}
+.switch input{opacity:0;width:0;height:0;position:absolute}
+.switch .sl{position:absolute;inset:0;background:#e6dcef;border-radius:99px;cursor:pointer;transition:.25s}
+.switch .sl::before{content:'';position:absolute;width:24px;height:24px;left:4px;top:3.5px;background:#fff;border-radius:50%;transition:.25s;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.switch input:checked + .sl{background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.switch input:checked + .sl::before{transform:translateX(24px)}
+.switch input:focus-visible + .sl{outline:3px solid rgba(161,92,255,.4)}
+fieldset{border:none}
+legend{font-weight:800;font-size:.85rem;margin-bottom:7px}
+.radios{display:flex;gap:8px;flex-wrap:wrap}
+.radios label{border:2px solid #ece3f4;border-radius:12px;padding:9px 14px;cursor:pointer;font-weight:700;font-size:.88rem;background:#fff;transition:.15s;display:flex;align-items:center;gap:6px}
+.radios label small{display:block;font-weight:600;color:var(--sub);font-size:.72rem}
+.radios input{position:absolute;opacity:0}
+.radios input:checked + label,.radios label.sel{border-color:var(--accent2);background:#faf5ff;box-shadow:0 3px 10px rgba(161,92,255,.12)}
+.radios input:focus-visible + label{outline:3px solid rgba(161,92,255,.4)}
+#gameOptions[disabled]{opacity:.45;pointer-events:none}
+
+/* buttons */
+.btn{border:none;border-radius:16px;padding:15px 26px;font-size:1.05rem;font-weight:800;cursor:pointer;transition:.2s;font-family:'Fredoka','Nunito',sans-serif}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 10px 26px rgba(255,94,125,.35)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(255,94,125,.45)}
+.btn-ghost{background:#fff;border:2px solid #e6d9f2;color:var(--ink)}
+.btn-ghost:hover{border-color:var(--accent2);background:#faf5ff}
+.btn-sm{padding:9px 16px;font-size:.85rem;border-radius:12px}
+.create-zone{text-align:center;margin-top:22px}
+.create-zone .btn-primary{width:100%;font-size:1.2rem;padding:18px}
+.create-sub{display:flex;gap:10px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+
+/* my surprises */
+#surpriseList{list-style:none;display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.sv-item{border:1.5px solid var(--line);border-radius:16px;padding:13px 15px;background:#fffdf9;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.sv-item .sv-dot{width:34px;height:34px;border-radius:10px;flex:none}
+.sv-item .sv-name{font-weight:800}
+.sv-item .sv-date{font-size:.75rem;color:var(--sub)}
+.sv-item .sv-actions{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.sv-pin{font-size:.78rem;color:var(--sub);width:100%}
+.empty{color:var(--sub);font-size:.9rem;text-align:center;padding:14px}
+
+/* draft banner */
+#draftBanner{display:none;background:#fff8e6;border:1.5px solid #f5dfA8;border-radius:16px;padding:12px 16px;margin-top:16px;align-items:center;gap:12px;flex-wrap:wrap;font-size:.9rem;font-weight:700}
+#draftBanner.show{display:flex}
+
+/* overlays / modals */
+.overlay{position:fixed;inset:0;background:rgba(40,20,60,.55);backdrop-filter:blur(4px);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px}
+.overlay[hidden]{display:none}
+.modal{background:#fff;border-radius:26px;max-width:600px;width:100%;max-height:92dvh;overflow-y:auto;padding:28px 26px;position:relative;box-shadow:0 30px 80px rgba(0,0,0,.35);animation:mIn .3s}
+@keyframes mIn{from{transform:translateY(24px) scale(.97);opacity:0}}
+.modal h2{font-size:1.45rem;font-weight:600;margin-bottom:6px}
+.modal-close{position:absolute;top:14px;right:14px;border:none;background:#f3ecfa;width:38px;height:38px;border-radius:50%;font-size:1.1rem;cursor:pointer;font-weight:800;color:var(--sub)}
+.modal-close:hover{background:#e9dcf7;color:var(--ink)}
+.link-box{display:flex;gap:8px;margin:14px 0 8px}
+.link-box input{flex:1;font-size:.85rem;background:#f8f4fc}
+#lenBadge{display:inline-block;border-radius:99px;padding:6px 13px;font-size:.8rem;font-weight:800;margin-bottom:12px}
+#lenBadge.g{background:#e8f8ee;color:var(--ok)} #lenBadge.y{background:#fef4e2;color:var(--warn)} #lenBadge.r{background:#fdeaea;color:var(--bad)}
+.share-row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.share-row a,.share-row button{text-decoration:none}
+.qr-zone{text-align:center;background:#faf6ff;border-radius:16px;padding:16px;margin-top:12px}
+#qrCode{display:inline-block;padding:10px;background:#fff;border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,.08)}
+#qrCode img,#qrCode canvas{display:block}
+.pin-reminder{background:#fff0f3;border:1.5px solid #ffd3de;border-radius:14px;padding:12px 15px;font-size:.87rem;margin-top:14px}
+
+/* preview frame */
+.preview-frame{width:min(560px,96vw);height:min(800px,93dvh);border-radius:26px;overflow:hidden;background:#fff;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,.4);position:relative;animation:mIn .3s}
+.preview-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#2f2340;color:#fff;font-size:.8rem;font-weight:700}
+.preview-bar button{margin-left:auto}
+#previewRoot{flex:1;overflow-y:auto;overflow-x:hidden}
+
+/* ---------- VIEWER (recipient experience) ---------- */
+#viewer{position:fixed;inset:0;z-index:100;overflow-y:auto;display:none}
+body.viewer-mode #creator,body.viewer-mode .bg-balloons{display:none}
+body.viewer-mode #viewer{display:block}
+.viewer-root{min-height:100%;display:flex;flex-direction:column;background:var(--vbg,#a18cd1);color:var(--vink,#fff);position:relative;font-family:'Nunito',sans-serif}
+.viewer-root.has-stars::before{content:'';position:absolute;inset:0;pointer-events:none;opacity:.8;
+  background-image:radial-gradient(2px 2px at 15% 20%,#fff,transparent),radial-gradient(1.5px 1.5px at 70% 12%,#fff,transparent),radial-gradient(2px 2px at 85% 40%,#ffe9a8,transparent),radial-gradient(1.5px 1.5px at 30% 65%,#fff,transparent),radial-gradient(2px 2px at 55% 85%,#bcd7ff,transparent),radial-gradient(1.5px 1.5px at 90% 75%,#fff,transparent),radial-gradient(1.5px 1.5px at 8% 88%,#fff,transparent)}
+.v-screen{flex:1;display:flex;align-items:center;justify-content:center;padding:26px 18px;min-height:100%}
+.v-card{background:var(--vcard,#fff);color:var(--vink,#3b2a4a);border-radius:28px;padding:34px 28px;max-width:520px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.25);text-align:center;animation:mIn .4s}
+.v-emoji{font-size:3rem;margin-bottom:8px}
+.v-card h2{font-family:'Fredoka',sans-serif;font-weight:600;font-size:1.5rem;margin-bottom:8px}
+.v-sub{color:var(--vsub,#7c6a8f);font-size:.9rem;margin-bottom:18px}
+.v-btn{margin-top:16px;width:100%}
+.pin-boxes{display:flex;gap:10px;justify-content:center;margin:18px 0 6px}
+.pin-digit{width:60px;height:72px;font-size:2rem;text-align:center;border:2.5px solid #e4d8ef;border-radius:16px;background:#fdfbff;font-weight:800;color:var(--ink)}
+.pin-digit:focus{border-color:var(--vaccent,#a15cff);outline:3px solid rgba(161,92,255,.3)}
+.pin-error{color:var(--bad);font-weight:800;font-size:.88rem;min-height:1.3em;margin-top:8px}
+.countdown{font-family:'Fredoka',sans-serif;font-size:2.2rem;font-weight:600;letter-spacing:2px;background:rgba(161,92,255,.1);border-radius:16px;padding:14px;margin-top:14px;color:var(--vaccent2,#a15cff)}
+
+/* game */
+.game-wrap{flex:1;display:flex;flex-direction:column;width:100%;max-width:920px;margin:0 auto;padding:16px;gap:12px;min-height:100dvh}
+.game-hud{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.hud-pill{background:rgba(255,255,255,.92);border-radius:99px;padding:8px 16px;font-weight:800;font-size:.95rem;color:#3b2a4a;box-shadow:0 4px 14px rgba(0,0,0,.15)}
+.hud-pill.urgent{color:#e0245e;animation:pulse .6s infinite alternate}
+@keyframes pulse{to{transform:scale(1.08)}}
+.hud-btn{margin-left:auto;background:rgba(255,255,255,.92);border:none;border-radius:99px;padding:8px 14px;font-size:1rem;cursor:pointer;font-weight:800}
+.game-area{flex:1;min-height:360px;position:relative;overflow:hidden;background:rgba(255,255,255,.16);border-radius:24px;touch-action:manipulation;user-select:none;-webkit-user-select:none;box-shadow:inset 0 0 40px rgba(0,0,0,.08)}
+.bwrap{position:absolute;bottom:-170px;animation:rise linear forwards;will-change:transform}
+@keyframes rise{from{transform:translateY(0)}to{transform:translateY(calc(-100dvh - 320px))}}
+.balloon{position:relative;width:64px;height:78px;border:none;cursor:pointer;border-radius:50% 50% 48% 48%/46% 46% 56% 56%;background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.65),rgba(255,255,255,0) 42%),var(--bcolor,#ff5e7d);box-shadow:inset -6px -8px 14px rgba(0,0,0,.14);animation:sway ease-in-out infinite;-webkit-tap-highlight-color:transparent}
+.balloon::after{content:'';position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top:9px solid var(--bcolor,#ff5e7d)}
+.bstr{position:absolute;top:calc(100% + 7px);left:50%;width:2px;height:64px;background:rgba(255,255,255,.55);transform:translateX(-50%);border-radius:2px}
+@keyframes sway{0%,100%{transform:translateX(-7px) rotate(-4deg)}50%{transform:translateX(7px) rotate(4deg)}}
+.bwrap.popped .balloon{animation:pop .28s forwards}
+.bwrap.popped .bstr{opacity:0}
+@keyframes pop{0%{transform:scale(1);opacity:1}40%{transform:scale(1.4);opacity:.85}100%{transform:scale(.05);opacity:0}}
+.end-card .big{font-size:3.4rem;margin-bottom:6px}
+
+/* reveal */
+.r-kicker{color:var(--vsub,#7c6a8f);font-weight:800;text-transform:uppercase;letter-spacing:2px;font-size:.78rem}
+.r-name{font-family:'Fredoka',sans-serif;font-weight:600;font-size:clamp(2rem,8vw,3.3rem);line-height:1.1;margin:6px 0 4px;background:linear-gradient(90deg,var(--vaccent,#ff5e7d),var(--vaccent2,#a15cff));-webkit-background-clip:text;background-clip:text;color:transparent;word-break:break-word}
+.r-emoji{font-size:2rem;letter-spacing:8px;margin:8px 0}
+.r-msg{text-align:left;background:rgba(161,92,255,.07);border:1.5px dashed rgba(161,92,255,.3);border-radius:18px;padding:18px;margin:16px 0;font-size:1.05rem;overflow-wrap:break-word}
+.r-msg p{margin:0 0 8px} .r-msg p:last-child{margin-bottom:0}
+.r-msg ul{margin:4px 0 10px 22px} .r-msg li{margin:3px 0}
+.r-msg mark{background:#ffe9a8;border-radius:5px;padding:1px 5px}
+.r-msg a{color:var(--vaccent2,#a15cff);font-weight:800}
+.r-lock{font-size:.78rem;color:var(--vsub,#7c6a8f);margin-top:14px}
+.r-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+
+/* toast */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(90px);background:#2f2340;color:#fff;padding:13px 22px;border-radius:99px;font-weight:800;font-size:.9rem;z-index:500;transition:.35s;opacity:0;pointer-events:none;box-shadow:0 12px 34px rgba(0,0,0,.3);max-width:90vw;text-align:center}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+footer.foot{text-align:center;color:var(--sub);font-size:.82rem;margin-top:36px}
+footer.foot a{color:var(--accent2)}
+noscript .ns{max-width:520px;margin:60px auto;background:#fff;border-radius:20px;padding:28px;text-align:center;box-shadow:var(--shadow)}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001s !important;animation-iteration-count:1 !important;transition-duration:.05s !important}
+  html{scroll-behavior:auto}
+  .bg-balloons{display:none}
+}
+@media (max-width:520px){
+  .pin-digit{width:52px;height:62px;font-size:1.6rem}
+  .pill{min-width:56px;font-size:.62rem}
+  .pill .dot{width:17px;height:17px}
+  section.card{padding:20px 16px}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-balloons" aria-hidden="true">
+  <span style="left:5%;animation-duration:16s;animation-delay:0s">🎈</span>
+  <span style="left:22%;animation-duration:22s;animation-delay:4s;font-size:32px">🎈</span>
+  <span style="left:45%;animation-duration:19s;animation-delay:8s">🎉</span>
+  <span style="left:68%;animation-duration:24s;animation-delay:2s;font-size:36px">🎈</span>
+  <span style="left:88%;animation-duration:17s;animation-delay:6s">🎈</span>
+</div>
+
+<noscript><div class="ns"><h2>🎈 JavaScript needed</h2><p>The Birthday Surprise Machine runs entirely in your browser and needs JavaScript to work. Please enable it to continue.</p></div></noscript>
+
+<!-- ==================== CREATOR ==================== -->
+<main class="wrap" id="creator">
+  <header class="hero">
+    <h1>🎈 Birthday Surprise Machine</h1>
+    <p class="tag">Build a magical link, lock it behind a secret PIN, and let the confetti fly. Runs 100% in the browser.</p>
+    <div class="badges">
+      <span class="badge">🔒 Really encrypted (AES‑GCM)</span>
+      <span class="badge">📴 Nothing ever uploaded</span>
+      <span class="badge">👁️ Preview before you share</span>
+      <span class="badge">📱 QR code ready</span>
+    </div>
+  </header>
+
+  <div id="draftBanner" role="status">
+    📝 We found an unfinished surprise on this device.
+    <button class="btn btn-ghost btn-sm" id="btnRestoreDraft" type="button">Restore</button>
+    <button class="btn btn-ghost btn-sm" id="btnDiscardDraft" type="button">Discard</button>
+  </div>
+
+  <nav class="progress" aria-label="Creation progress">
+    <div class="pills">
+      <button class="pill" type="button" data-target="step-name"><span class="dot">1</span>Name</button>
+      <button class="pill" type="button" data-target="step-message"><span class="dot">2</span>Message</button>
+      <button class="pill" type="button" data-target="step-pin"><span class="dot">3</span>PIN</button>
+      <button class="pill" type="button" data-target="step-theme"><span class="dot">4</span>Theme</button>
+      <button class="pill" type="button" data-target="step-game"><span class="dot">5</span>Game</button>
+      <button class="pill" type="button" data-target="step-timing"><span class="dot">6</span>Timing</button>
+    </div>
+    <div class="pbar" role="progressbar" aria-label="Form completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="pbarWrap"><i id="pfill"></i></div>
+  </nav>
+
+  <!-- 1 NAME -->
+  <section class="card" id="step-name">
+    <div class="card-head"><span class="card-num">1</span><h2>Who is it for?</h2></div>
+    <p class="hint">Shows up big and bold on the surprise card.</p>
+    <label class="fl" for="nameInput">Child's name</label>
+    <input type="text" id="nameInput" maxlength="40" placeholder="e.g. Mia" autocomplete="off">
+    <p class="field-error" id="err-name" role="alert">Please enter a name.</p>
+  </section>
+
+  <!-- 2 MESSAGE -->
+  <section class="card" id="step-message">
+    <div class="card-head"><span class="card-num">2</span><h2>Your message</h2></div>
+    <p class="hint">Formatting: <b>**bold**</b> · <code>[link](url)</code> · <code>• list</code> · <code>==highlight==</code> · emoji 🎉</p>
+    <div class="toolbar" role="toolbar" aria-label="Message formatting">
+      <button class="tb" type="button" id="tb-bold" title="Bold (wraps in **)"><b>B</b> Bold</button>
+      <button class="tb" type="button" id="tb-link" title="Insert a link">🔗 Link</button>
+      <button class="tb" type="button" id="tb-list" title="Bulleted list item">• List</button>
+      <button class="tb" type="button" id="tb-mark" title="Highlight (wraps in ==)">🖍 Highlight</button>
+      <button class="tb" type="button" id="tb-emoji" title="Emoji picker" aria-expanded="false">😀 Emoji</button>
+    </div>
+    <div id="emojiRow" aria-label="Emoji picker"></div>
+    <label class="fl sr-only" for="msgInput">Your message</label>
+    <textarea id="msgInput" maxlength="600" placeholder="Write something lovely…"></textarea>
+    <p class="counter" id="charCount" aria-live="polite">0/600 characters</p>
+    <p class="field-error" id="err-msg" role="alert">Please write a little message.</p>
+  </section>
+
+  <!-- 3 PIN -->
+  <section class="card" id="step-pin">
+    <div class="card-head"><span class="card-num">3</span><h2>Secret PIN</h2></div>
+    <p class="hint">They will need this to unwrap the surprise.</p>
+    <label class="fl" for="pinInput">4-digit PIN</label>
+    <div class="pin-row">
+      <input type="password" id="pinInput" inputmode="numeric" autocomplete="off" maxlength="4" placeholder="••••" aria-describedby="pin-note">
+      <button class="btn btn-ghost btn-sm" type="button" id="btnShuffle">Shuffle 🎲</button>
+      <button class="btn btn-ghost btn-sm" type="button" id="btnPeekPin" aria-pressed="false">Show 👁</button>
+    </div>
+    <p class="field-error" id="err-pin" role="alert">PIN must be exactly 4 digits.</p>
+    <div class="note" id="pin-note">🔐 <strong>Real encryption:</strong> your PIN is the key — the message is encrypted with AES‑GCM right in your browser. Without the PIN the link is genuinely unreadable, so <strong>don't forget it</strong> (we'll keep a copy on this device only).</div>
+  </section>
+
+  <!-- 4 THEME -->
+  <section class="card" id="step-theme">
+    <div class="card-head"><span class="card-num">4</span><h2>Colour theme</h2></div>
+    <p class="hint">Sets the mood for the whole surprise experience.</p>
+    <div class="theme-grid" id="themeGrid" role="radiogroup" aria-label="Colour theme"></div>
+  </section>
+
+  <!-- 5 GAME -->
+  <section class="card" id="step-game">
+    <div class="card-head"><span class="card-num">5</span><h2>Balloon Pop game</h2></div>
+    <p class="hint">Bonus mini-game: pop 20 balloons before the 30s timer runs out to unlock the surprise.</p>
+    <div class="switch-row">
+      <label class="switch"><input type="checkbox" id="gameToggle" checked><span class="sl"></span></label>
+      <strong id="gameToggleLabel">Game: On 🎈</strong>
+    </div>
+    <div id="gameOptions">
+      <fieldset>
+        <legend>Difficulty</legend>
+        <div class="radios" id="diffRadios" role="radiogroup" aria-label="Game difficulty"></div>
+      </fieldset>
+      <fieldset style="margin-top:14px">
+        <legend>If they run out of time…</legend>
+        <div class="radios">
+          <input type="radio" name="gmode" id="gm-opt" value="optional" checked>
+          <label for="gm-opt" class="sel">😇 Kind mode<small>They can retry or skip to the surprise</small></label>
+          <input type="radio" name="gmode" id="gm-req" value="required">
+          <label for="gm-req">💪 Challenge mode<small>They must pop all 20 to unlock!</small></label>
+        </div>
+      </fieldset>
+      <p class="hint" style="margin-top:10px">♿ The game is fully keyboard-playable (Tab + Enter), and there's always an accessible path to the message in Kind mode.</p>
+    </div>
+  </section>
+
+  <!-- 6 TIMING -->
+  <section class="card" id="step-timing">
+    <div class="card-head"><span class="card-num">6</span><h2>Scheduled reveal <span class="opt">optional</span></h2></div>
+    <p class="hint">Open too early? They'll see a live countdown instead of the surprise. 🕰️</p>
+    <label class="fl" for="waitInput">Don't unlock until</label>
+    <div class="pin-row">
+      <input type="datetime-local" id="waitInput">
+      <button class="btn btn-ghost btn-sm" type="button" id="btnClearWait">Clear ✕</button>
+    </div>
+    <p class="field-error" id="err-wait" role="alert">That date doesn't look valid.</p>
+  </section>
+
+  <!-- CREATE -->
+  <div class="create-zone">
+    <button class="btn btn-primary" type="button" id="btnCreate">Create the magic link ✨</button>
+    <div class="create-sub">
+      <button class="btn btn-ghost btn-sm" type="button" id="btnPreview">👁 Preview the experience</button>
+      <button class="btn btn-ghost btn-sm" type="button" id="btnResetAll">♻️ Start over</button>
+    </div>
+  </div>
+
+  <!-- MY SURPRISES -->
+  <section class="card" id="mySurprises">
+    <div class="card-head"><span class="card-num">💝</span><h2>My Surprises</h2></div>
+    <p class="hint">Saved on <strong>this device only</strong> (localStorage) — never sent anywhere. Includes the PIN so you can't lose it.</p>
+    <ul id="surpriseList"></ul>
+  </section>
+
+  <footer class="foot">
+    <p>Made with 🎈 · Your data never leaves your device · <a href="#" id="howLink">How does this work?</a></p>
+    <details style="text-align:left;margin-top:10px" id="howDetails">
+      <summary style="cursor:pointer;font-weight:800;color:var(--sub)">How does this work?</summary>
+      <p style="margin-top:8px;font-size:.85rem">Your message is encrypted with <strong>AES‑GCM (256‑bit)</strong> using a key derived from your PIN via <strong>PBKDF2 (100k iterations)</strong>, then compressed and stored entirely inside the link itself. There is no server, no database, no tracking. If you lose the PIN, the surprise is unrecoverable — that's real privacy.</p>
+    </details>
+  </footer>
+</main>
+
+<!-- ==================== RECIPIENT VIEWER ==================== -->
+<div id="viewer" aria-live="polite"></div>
+
+<!-- ==================== PREVIEW MODAL ==================== -->
+<div class="overlay" id="previewOverlay" hidden role="dialog" aria-modal="true" aria-label="Surprise preview">
+  <div class="preview-frame">
+    <div class="preview-bar">👁 Preview — exactly what they'll see
+      <button class="modal-close" type="button" id="btnClosePreview" style="position:static;margin-left:auto" aria-label="Close preview">✕</button>
+    </div>
+    <div id="previewRoot"></div>
+  </div>
+</div>
+
+<!-- ==================== SUCCESS MODAL ==================== -->
+<div class="overlay" id="successOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="successTitle">
+  <div class="modal">
+    <button class="modal-close" type="button" id="btnCloseSuccess" aria-label="Close">✕</button>
+    <div style="text-align:center;font-size:2.6rem">🎉</div>
+    <h2 id="successTitle" style="text-align:center">Your magic link is ready!</h2>
+    <p style="text-align:center;color:var(--sub);font-size:.9rem">Send it to the birthday star — plus the PIN through a <em>different</em> channel for extra suspense.</p>
+    <div class="link-box">
+      <input type="text" id="magicLink" readonly aria-label="Your magic link">
+      <button class="btn btn-primary btn-sm" type="button" id="btnCopy" style="flex:none">📋 Copy</button>
+    </div>
+    <span id="lenBadge"></span>
+    <div class="share-row">
+      <a class="btn btn-ghost btn-sm" id="shareWhatsapp" target="_blank" rel="noopener">💬 WhatsApp</a>
+      <a class="btn btn-ghost btn-sm" id="shareSms">📱 SMS</a>
+      <a class="btn btn-ghost btn-sm" id="shareEmail">✉️ Email</a>
+      <button class="btn btn-ghost btn-sm" type="button" id="shareNative" hidden>🚀 Share…</button>
+    </div>
+    <div class="qr-zone" id="qrZone" hidden>
+      <div id="qrCode"></div>
+      <p style="font-size:.8rem;color:var(--sub);margin:10px 0">Scan for instant surprise — great for cards! 🎴</p>
+      <button class="btn btn-ghost btn-sm" type="button" id="btnDownloadQr">⬇️ Download QR</button>
+    </div>
+    <div class="pin-reminder">🔑 <strong>Don't forget the PIN:</strong> <span id="successPin">••••</span>
+      <button class="btn btn-ghost btn-sm" type="button" id="btnPeekSuccessPin" style="margin-left:6px">Show 👁</button>
+    </div>
+    <div class="share-row" style="justify-content:center;margin-top:16px">
+      <button class="btn btn-ghost btn-sm" type="button" id="btnPreviewSuccess">👁 Preview</button>
+      <button class="btn btn-primary btn-sm" type="button" id="btnCreateAnother">✨ Make another</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" role="status"></div>
+
+<script>
+(function(){
+'use strict';
+var $=function(s,r){return (r||document).querySelector(s);};
+var reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)');
+
+/* ================= CONFIG ================= */
+var GAME_GOAL=20, GAME_TIME=30;
+var THEMES={
+  rainbow:{label:'Rainbow Party',emoji:'🌈',swatch:'linear-gradient(135deg,#ff9a9e,#fbc2eb,#a18cd1)',balloons:['#ff5e7d','#ffb347','#ffe259','#7ee081','#5ec8ff','#b78bff'],vars:{'--vbg':'linear-gradient(160deg,#ff9a9e 0%,#fbc2eb 45%,#a18cd1 100%)','--vcard':'#ffffff','--vink':'#4a2357','--vsub':'#8266a0','--vaccent':'#ff5e7d','--vaccent2':'#a15cff'}},
+  ocean:{label:'Ocean Splash',emoji:'🌊',swatch:'linear-gradient(135deg,#4facfe,#00f2fe)',balloons:['#00b4d8','#48cae4','#90e0ef','#0077b6','#ffb703','#fb8500'],vars:{'--vbg':'linear-gradient(160deg,#2b8fd6 0%,#4facfe 50%,#00f2fe 100%)','--vcard':'#ffffff','--vink':'#0b3d5c','--vsub':'#4d7c9c','--vaccent':'#0077b6','--vaccent2':'#00b4d8'}},
+  candy:{label:'Candy Land',emoji:'🍭',swatch:'linear-gradient(135deg,#ffd6e8,#c1f0d3)',balloons:['#ff8fb8','#ffb3c6','#a2e4b8','#ffe08a','#c3aed6','#8ecae6'],vars:{'--vbg':'linear-gradient(160deg,#ffd6e8 0%,#fff6e0 50%,#c1f0d3 100%)','--vcard':'#fffafc','--vink':'#7a3b57','--vsub':'#a06b82','--vaccent':'#f472a0','--vaccent2':'#b583d6'}},
+  dino:{label:'Dino Jungle',emoji:'🦕',swatch:'linear-gradient(135deg,#56ab2f,#a8e063)',balloons:['#56ab2f','#a8e063','#f6a821','#e2574c','#2e8b57','#c9d64a'],vars:{'--vbg':'linear-gradient(160deg,#3e8e2f 0%,#56ab2f 55%,#a8e063 100%)','--vcard':'#fffdf5','--vink':'#2f4a1f','--vsub':'#6b8055','--vaccent':'#e2574c','--vaccent2':'#4b8b2a'}},
+  space:{label:'Space Rocket',emoji:'🚀',swatch:'linear-gradient(135deg,#141e30,#654ea3)',balloons:['#b78bff','#5ec8ff','#ff8fb8','#ffe259','#7ee081','#ff9e6d'],vars:{'--vbg':'linear-gradient(160deg,#0f0c29 0%,#302b63 55%,#24243e 100%)','--vcard':'#1e1845','--vink':'#f1edff','--vsub':'#a99fd4','--vaccent':'#ffd166','--vaccent2':'#b78bff'}}
+};
+var DIFFS={
+  turtle:{label:'Turtle 🐢',desc:'Balloons drift up slowly',rise:[7.5,10.5],spawn:950},
+  bunny:{label:'Bunny 🐰',desc:'A happy medium hop',rise:[5,7],spawn:720},
+  rocket:{label:'Rocket 🚀',desc:'Zoom! Fast & furious',rise:[3.2,4.6],spawn:520}
+};
+var EMOJIS=['🎂','🎈','🎁','🎉','🥳','😍','🌈','⭐','🦖','🚀','🐰','🍰','💖','🙌','✨','🎊','🦄','🍭'];
+var LS_DRAFT='bsm_draft_v1', LS_SAVED='bsm_saved_v1';
+
+/* ================= UTILS ================= */
+function escapeHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function rand(a,b){return a+Math.random()*(b-a);}
+function baseUrl(){return location.href.split('?')[0].split('#')[0];}
+function toast(msg){var t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(function(){t.classList.remove('show');},2600);}
+function b64url(bytes){var s='';var arr=new Uint8Array(bytes);for(var i=0;i<arr.length;i++)s+=String.fromCharCode(arr[i]);return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+function unb64url(str){str=String(str).replace(/-/g,'+').replace(/_/g,'/');var pad=str.length%4;if(pad)str+='===='.slice(pad);var bin=atob(str);var arr=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);return arr;}
+function hashPin(p){var h=2166136261;var s='bsm:'+p;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0).toString(36);}
+function fmtDate(ms){try{return new Date(ms).toLocaleString(undefined,{dateStyle:'full',timeStyle:'short'});}catch(e){return new Date(ms).toString();}}
+
+/* ================= AUDIO (synthesized, no files) ================= */
+var actx=null, soundMuted=false;
+function audioCtx(){if(soundMuted)return null;try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();if(actx.state==='suspended')actx.resume();return actx;}catch(e){return null;}}
+function popSound(){var c=audioCtx();if(!c)return;var t=c.currentTime;
+  var o=c.createOscillator(),g=c.createGain();o.type='triangle';
+  o.frequency.setValueAtTime(480+Math.random()*320,t);o.frequency.exponentialRampToValueAtTime(70,t+0.09);
+  g.gain.setValueAtTime(0.22,t);g.gain.exponentialRampToValueAtTime(0.0001,t+0.11);
+  o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+0.12);
+  try{var len=Math.floor(c.sampleRate*0.05),buf=c.createBuffer(1,len,c.sampleRate),d=buf.getChannelData(0);
+  for(var i=0;i<len;i++)d[i]=(Math.random()*2-1)*(1-i/len);
+  var n=c.createBufferSource();n.buffer=buf;var ng=c.createGain();ng.gain.value=0.14;n.connect(ng);ng.connect(c.destination);n.start();}catch(e){}
+}
+function winSound(){var c=audioCtx();if(!c)return;[523.25,659.25,783.99,1046.5].forEach(function(f,i){
+  var o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=f;
+  var t=c.currentTime+i*0.13;g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.2,t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+0.3);
+  o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+0.32);});
+}
+
+/* ================= CONFETTI ================= */
+function confettiBurst(colors,opts){
+  if(typeof window.confetti!=='function')return;
+  opts=opts||{};
+  var count=reducedMotion.matches?30:(opts.count||140);
+  window.confetti({particleCount:count,spread:opts.spread||75,startVelocity:opts.startVelocity||42,origin:opts.origin||{y:0.6},colors:colors||['#ff5e7d','#ffd166','#a15cff','#5ec8ff','#7ee081'],scalar:opts.scalar||1,ticks:reducedMotion.matches?80:200,disableForReducedMotion:false});
+}
+function confettiWaves(colors){confettiBurst(colors,{origin:{y:0.55}});setTimeout(function(){confettiBurst(colors,{origin:{x:0.15,y:0.5},spread:60});},260);setTimeout(function(){confettiBurst(colors,{origin:{x:0.85,y:0.5},spread:60});},480);}
+function confettiAt(x,y,color){if(typeof window.confetti!=='function')return;window.confetti({particleCount:reducedMotion.matches?3:9,spread:48,ticks:70,scalar:0.7,origin:{x:x,y:y},colors:[color,'#ffffff']});}
+
+/* ================= MESSAGE RENDERER ================= */
+function inlineFmt(s){
+  s=escapeHtml(s);
+  s=s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+  s=s.replace(/==([^=]+)==/g,'<mark>$1</mark>');
+  s=s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener noreferrer nofollow">$1</a>');
+  return s===''?'&nbsp;':s;
+}
+function renderMessage(text){
+  var lines=String(text||'').split('\n'),html='',inList=false;
+  lines.forEach(function(line){
+    var isItem=/^\s*•/.test(line);
+    if(isItem){if(!inList){html+='<ul>';inList=true;}html+='<li>'+inlineFmt(line.replace(/^\s*•\s*/,''))+'</li>';}
+    else{if(inList){html+='</ul>';inList=false;}html+='<p>'+inlineFmt(line)+'</p>';}
+  });
+  if(inList)html+='</ul>';
+  return html;
+}
+
+/* ================= ENCRYPTION ================= */
+function cryptoReady(){return !!(window.crypto&&window.crypto.subtle&&window.crypto.subtle.importKey);}
+function deriveKey(pin,salt){
+  var enc=new TextEncoder();
+  return crypto.subtle.importKey('raw',enc.encode(String(pin)),'PBKDF2',false,['deriveKey']).then(function(km){
+    return crypto.subtle.deriveKey({name:'PBKDF2',salt:salt,iterations:100000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+  });
+}
+function encryptPayload(data,pin){
+  var salt=crypto.getRandomValues(new Uint8Array(16));
+  var iv=crypto.getRandomValues(new Uint8Array(12));
+  return deriveKey(pin,salt).then(function(key){
+    return crypto.subtle.encrypt({name:'AES-GCM',iv:iv},key,new TextEncoder().encode(JSON.stringify(data)));
+  }).then(function(ct){
+    var c=new Uint8Array(ct);
+    var all=new Uint8Array(salt.length+iv.length+c.length);
+    all.set(salt,0);all.set(iv,salt.length);all.set(c,salt.length+iv.length);
+    return 's='+b64url(all);
+  });
+}
+function decryptPayload(b64,pin){
+  var all=unb64url(b64);
+  if(all.length<30)throw new DOMException('too short','DataError');
+  var salt=all.slice(0,16),iv=all.slice(16,28),ct=all.slice(28);
+  return deriveKey(pin,salt).then(function(key){
+    return crypto.subtle.decrypt({name:'AES-GCM',iv:iv},key,ct);
+  }).then(function(pt){
+    var obj=JSON.parse(new TextDecoder().decode(pt));
+    if(!obj||typeof obj!=='object')throw new Error('bad payload');
+    return obj;
+  });
+}
+function compressJson(obj){var json=JSON.stringify(obj);try{if(window.LZString)return window.LZString.compressToEncodedURIComponent(json);}catch(e){}return b64url(new TextEncoder().encode(json));}
+function decompressJson(str){try{if(window.LZString){var d=window.LZString.decompressFromEncodedURIComponent(str);if(d)return JSON.parse(d);}}catch(e){}try{return JSON.parse(new TextDecoder().decode(unb64url(str)));}catch(e2){return null;}}
+function encodeFallback(data,pin){var p={};for(var k in data)p[k]=data[k];p.ph=hashPin(pin);return 'd='+compressJson(p);}
+
+/* ================= STATE ================= */
+var state={name:'',message:'',pin:'',theme:'rainbow',gameOn:true,difficulty:'bunny',gameMode:'optional',waitUntil:null};
+
+/* ---------- build theme picker ---------- */
+(function(){
+  var grid=$('#themeGrid'),html='';
+  Object.keys(THEMES).forEach(function(k,i){
+    var t=THEMES[k];
+    html+='<span><input type="radio" name="theme" id="th-'+k+'" value="'+k+'"'+(k==='rainbow'?' checked':'')+'>'+
+      '<label for="th-'+k+'"><span class="sw" style="background:'+t.swatch+'"></span><span class="tl">'+t.emoji+' '+t.label+'</span></label></span>';
+  });
+  grid.innerHTML=html;
+  grid.addEventListener('change',function(e){if(e.target.name==='theme'){state.theme=e.target.value;updateProgress();saveDraftSoon();}});
+})();
+
+/* ---------- build difficulty radios ---------- */
+(function(){
+  var wrap=$('#diffRadios'),html='';
+  Object.keys(DIFFS).forEach(function(k){
+    var d=DIFFS[k];
+    html+='<span><input type="radio" name="diff" id="df-'+k+'" value="'+k+'"'+(k==='bunny'?' checked':'')+'>'+
+      '<label for="df-'+k+'">'+d.label+'<small>'+d.desc+'</small></label></span>';
+  });
+  wrap.innerHTML=html;
+  wrap.addEventListener('change',function(e){if(e.target.name==='diff'){state.difficulty=e.target.value;saveDraftSoon();}});
+})();
+
+/* ---------- emoji picker ---------- */
+(function(){
+  var row=$('#emojiRow');
+  EMOJIS.forEach(function(em){
+    var b=document.createElement('button');b.type='button';b.textContent=em;b.setAttribute('aria-label','Insert '+em);
+    b.addEventListener('click',function(){insertAtCursor($('#msgInput'),em);syncMsg();});
+    row.appendChild(b);
+  });
+  $('#tb-emoji').addEventListener('click',function(){
+    var open=row.classList.toggle('open');this.setAttribute('aria-expanded',open?'true':'false');
+  });
+})();
+
+function insertAtCursor(ta,text){
+  var s=ta.selectionStart,e=ta.selectionEnd;
+  ta.value=ta.value.slice(0,s)+text+ta.value.slice(e);
+  ta.focus();ta.selectionStart=ta.selectionEnd=s+text.length;
+}
+function wrapSelection(ta,before,after,ph){
+  var s=ta.selectionStart,e=ta.selectionEnd;
+  var sel=ta.value.slice(s,e)||ph;
+  ta.value=ta.value.slice(0,s)+before+sel+after+ta.value.slice(e);
+  ta.focus();ta.selectionStart=s+before.length;ta.selectionEnd=s+before.length+sel.length;
+}
+$('#tb-bold').addEventListener('click',function(){wrapSelection($('#msgInput'),'**','**','bold text');syncMsg();});
+$('#tb-mark').addEventListener('click',function(){wrapSelection($('#msgInput'),'==','==','highlight');syncMsg();});
+$('#tb-link').addEventListener('click',function(){wrapSelection($('#msgInput'),'[','](https://)','link text');syncMsg();});
+$('#tb-list').addEventListener('click',function(){var ta=$('#msgInput');insertAtCursor(ta,'\n• ');syncMsg();});
+
+/* ---------- inputs ---------- */
+function syncMsg(){
+  var ta=$('#msgInput');state.message=ta.value;
+  var n=ta.value.length,c=$('#charCount');
+  c.textContent=n+'/600 characters';
+  c.className='counter'+(n>560?' err':(n>480?' warn':''));
+  updateProgress();saveDraftSoon();
+}
+$('#msgInput').addEventListener('input',syncMsg);
+$('#nameInput').addEventListener('input',function(){state.name=this.value;hideErr('err-name');updateProgress();saveDraftSoon();});
+$('#pinInput').addEventListener('input',function(){this.value=this.value.replace(/\D/g,'').slice(0,4);state.pin=this.value;hideErr('err-pin');updateProgress();saveDraftSoon();});
+$('#btnShuffle').addEventListener('click',function(){
+  var a=new Uint32Array(1);crypto.getRandomValues(a);
+  var pin=String(a[0]%10000);while(pin.length<4)pin='0'+pin;
+  $('#pinInput').value=pin;state.pin=pin;$('#pinInput').type='text';$('#btnPeekPin').setAttribute('aria-pressed','true');$('#btnPeekPin').textContent='Hide 🙈';
+  updateProgress();saveDraftSoon();toast('🎲 New random PIN generated');
+});
+$('#btnPeekPin').addEventListener('click',function(){
+  var i=$('#pinInput'),show=i.type==='password';
+  i.type=show?'text':'password';
+  this.textContent=show?'Hide 🙈':'Show 👁';this.setAttribute('aria-pressed',show?'true':'false');
+});
+$('#gameToggle').addEventListener('change',function(){
+  state.gameOn=this.checked;
+  $('#gameOptions').disabled=!this.checked;
+  $('#gameToggleLabel').textContent='Game: '+(this.checked?'On 🎈':'Off ✖');
+  saveDraftSoon();
+});
+document.querySelectorAll('input[name=gmode]').forEach(function(r){r.addEventListener('change',function(){state.gameMode=this.value;document.querySelectorAll('input[name=gmode]').forEach(function(x){x.nextElementSibling.classList.toggle('sel',x.checked);});saveDraftSoon();});});
+$('#waitInput').addEventListener('change',function(){
+  hideErr('err-wait');
+  if(this.value){var d=new Date(this.value);state.waitUntil=isNaN(d.getTime())?'invalid':d.getTime();}else state.waitUntil=null;
+  saveDraftSoon();
+});
+$('#btnClearWait').addEventListener('click',function(){$('#waitInput').value='';state.waitUntil=null;});
+$('#howLink').addEventListener('click',function(e){e.preventDefault();$('#howDetails').open=true;$('#howDetails').scrollIntoView({behavior:'smooth',block:'center'});});
+(function(){var w=$('#waitInput');var now=new Date();now.setMinutes(now.getMinutes()-now.getTimezoneOffset());w.min=now.toISOString().slice(0,16);})();
+
+/* ---------- progress ---------- */
+function updateProgress(){
+  var steps=[state.name.trim().length>0,state.message.trim().length>0,state.pin.length===4,true,true,true];
+  var pct=Math.round(steps.filter(Boolean).length/steps.length*100);
+  $('#pfill').style.width=pct+'%';
+  $('#pbarWrap').setAttribute('aria-valuenow',pct);
+  document.querySelectorAll('.pill').forEach(function(p,i){
+    p.classList.toggle('done',steps[i]);
+    p.querySelector('.dot').textContent=steps[i]?'✓':(i+1);
+  });
+}
+document.querySelectorAll('.pill').forEach(function(p){p.addEventListener('click',function(){var el=document.getElementById(this.dataset.target);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});});});
+
+/* ---------- errors ---------- */
+function showErr(id,msg){var e=document.getElementById(id);if(msg)e.textContent=msg;e.classList.add('show');}
+function hideErr(id){var e=document.getElementById(id);if(e)e.classList.remove('show');}
+
+/* ---------- drafts ---------- */
+var draftTimer=null;
+function saveDraftSoon(){clearTimeout(draftTimer);draftTimer=setTimeout(saveDraft,600);}
+function saveDraft(){try{localStorage.setItem(LS_DRAFT,JSON.stringify(state));}catch(e){}}
+function loadDraft(){try{var d=localStorage.getItem(LS_DRAFT);return d?JSON.parse(d):null;}catch(e){return null;}}
+(function(){
+  var d=loadDraft();
+  if(d&&(d.name||d.message||d.pin||d.waitUntil)){
+    $('#draftBanner').classList.add('show');
+    $('#btnRestoreDraft').addEventListener('click',function(){
+      state.name=d.name||'';state.message=d.message||'';state.pin=d.pin||'';
+      state.theme=d.theme||'rainbow';state.gameOn=d.gameOn!==false;state.difficulty=d.difficulty||'bunny';state.gameMode=d.gameMode||'optional';state.waitUntil=d.waitUntil||null;
+      $('#nameInput').value=state.name;$('#msgInput').value=state.message;$('#pinInput').value=state.pin;
+      var th=document.getElementById('th-'+state.theme);if(th)th.checked=true;
+      $('#gameToggle').checked=state.gameOn;$('#gameOptions').disabled=!state.gameOn;$('#gameToggleLabel').textContent='Game: '+(state.gameOn?'On 🎈':'Off ✖');
+      var df=document.getElementById('df-'+state.difficulty);if(df)df.checked=true;
+      document.querySelectorAll('input[name=gmode]').forEach(function(x){x.checked=(x.value===state.gameMode);x.nextElementSibling.classList.toggle('sel',x.checked);});
+      if(state.waitUntil&&state.waitUntil!=='invalid'){var dt=new Date(state.waitUntil);dt.setMinutes(dt.getMinutes()-dt.getTimezoneOffset());$('#waitInput').value=dt.toISOString().slice(0,16);}
+      syncMsg();updateProgress();
+      $('#draftBanner').classList.remove('show');toast('📝 Draft restored');
+    });
+    $('#btnDiscardDraft').addEventListener('click',function(){localStorage.removeItem(LS_DRAFT);$('#draftBanner').classList.remove('show');});
+  }
+})();
+
+/* ---------- validation ---------- */
+function validate(){
+  var ok=true,firstBad=null;
+  ['err-name','err-msg','err-pin','err-wait'].forEach(hideErr);
+  if(!state.name.trim()){showErr('err-name');ok=false;firstBad=firstBad||$('#step-name');$('#nameInput').closest('section').classList.add('shake');}
+  if(!state.message.trim()){showErr('err-msg');ok=false;firstBad=firstBad||$('#step-message');}
+  if(!/^\d{4}$/.test(state.pin)){showErr('err-pin');ok=false;firstBad=firstBad||$('#step-pin');}
+  if(state.waitUntil==='invalid'){showErr('err-wait');ok=false;firstBad=firstBad||$('#step-timing');}
+  setTimeout(function(){document.querySelectorAll('.shake').forEach(function(s){s.classList.remove('shake');});},500);
+  if(!ok&&firstBad){firstBad.scrollIntoView({behavior:'smooth',block:'center'});toast('🔍 Just a few things to fix…');}
+  return ok;
+}
+function buildPayload(){
+  return {v:1,n:state.name.trim(),m:state.message,t:state.theme,g:{on:state.gameOn,d:state.difficulty,mode:state.gameMode},w:(state.waitUntil&&state.waitUntil!=='invalid')?state.waitUntil:null,pin:state.pin};
+}
+
+/* ---------- create ---------- */
+$('#btnCreate').addEventListener('click',function(){
+  if(!validate())return;
+  var payload=buildPayload();
+  var btn=this;btn.disabled=true;btn.textContent='Encrypting… 🔐';
+  var p;
+  if(cryptoReady())p=encryptPayload(payload,state.pin);
+  else{p=Promise.resolve(encodeFallback(payload,state.pin));toast('ℹ️ This browser lacks Web Crypto — link is PIN-gated & compressed instead.');}
+  p.then(function(query){
+    var url=baseUrl()+'?'+query;
+    saveSurprise({id:Date.now(),name:payload.n,theme:payload.t,pin:payload.pin,url:url,created:Date.now()});
+    showSuccess(url,payload);
+  }).catch(function(err){
+    console.error(err);toast('😢 Something went wrong building the link. Try again.');
+  }).finally(function(){btn.disabled=false;btn.textContent='Create the magic link ✨';});
+});
+$('#btnResetAll').addEventListener('click',function(){
+  if(!confirm('Clear the form and start over?'))return;
+  state={name:'',message:'',pin:'',theme:'rainbow',gameOn:true,difficulty:'bunny',gameMode:'optional',waitUntil:null};
+  $('#nameInput').value='';$('#msgInput').value='';$('#pinInput').value='';$('#waitInput').value='';
+  document.getElementById('th-rainbow').checked=true;document.getElementById('df-bunny').checked=true;
+  $('#gameToggle').checked=true;$('#gameOptions').disabled=false;$('#gameToggleLabel').textContent='Game: On 🎈';
+  document.querySelectorAll('input[name=gmode]').forEach(function(x){x.checked=(x.value==='optional');x.nextElementSibling.classList.toggle('sel',x.checked);});
+  syncMsg();updateProgress();localStorage.removeItem(LS_DRAFT);window.scrollTo({top:0,behavior:'smooth'});
+});
+
+/* ---------- success modal ---------- */
+var lastSuccess=null;
+function showSuccess(url,payload){
+  lastSuccess={url:url,payload:payload};
+  $('#magicLink').value=url;
+  var len=url.length,b=$('#lenBadge');
+  if(len<=900){b.className='g';b.textContent='👍 '+len+' chars — nice and short, safe for SMS, WhatsApp & anywhere.';}
+  else if(len<=1800){b.className='y';b.textContent='⚠️ '+len+' chars — quite long. Some apps (esp. SMS) may split or truncate it. Test-send it first!';}
+  else{b.className='r';b.textContent='🚨 '+len+' chars — very long. High truncation risk. Consider shortening the message.';}
+  var shareText='🎈 A birthday surprise is waiting for you! Open the link and enter the secret PIN:\n'+url;
+  $('#shareWhatsapp').href='https://wa.me/?text='+encodeURIComponent(shareText);
+  $('#shareSms').href='sms:?&body='+encodeURIComponent(shareText);
+  $('#shareEmail').href='mailto:?subject='+encodeURIComponent('🎈 A surprise just for you!')+'&body='+encodeURIComponent(shareText);
+  if(navigator.share){$('#shareNative').hidden=false;$('#shareNative').onclick=function(){navigator.share({title:'A birthday surprise for you! 🎈',text:shareText}).catch(function(){});};}
+  $('#successPin').textContent='••••';$('#successPin').dataset.pin=payload.pin;$('#btnPeekSuccessPin').textContent='Show 👁';
+  var qrZ=$('#qrZone'),qrE=$('#qrCode');qrE.innerHTML='';
+  if(window.QRCode&&len<=1500){try{qrZ.hidden=false;new QRCode(qrE,{text:url,width:170,height:170,correctLevel:QRCode.CorrectLevel.M});}catch(e){qrZ.hidden=true;}}
+  else{qrZ.hidden=true;if(window.QRCode&&len>1500)qrZ.innerHTML='';}
+  openOverlay('#successOverlay','#btnCloseSuccess');
+  confettiWaves(THEMES[payload.t]?THEMES[payload.t].balloons:null);
+}
+$('#btnCopy').addEventListener('click',function(){copyText($('#magicLink').value);});
+$('#btnPeekSuccessPin').addEventListener('click',function(){
+  var s=$('#successPin'),showing=s.textContent!=='••••';
+  s.textContent=showing?'••••':s.dataset.pin;
+  this.textContent=showing?'Show 👁':'Hide 🙈';
+});
+$('#btnDownloadQr').addEventListener('click',function(){
+  try{var c=$('#qrCode').querySelector('canvas')||$('#qrCode').querySelector('img');
+    var url=c.tagName==='CANVAS'?c.toDataURL('image/png'):c.src;
+    var a=document.createElement('a');a.href=url;a.download='surprise-qr.png';a.click();toast('⬇️ QR downloaded');
+  }catch(e){toast('😢 Could not download QR');}
+});
+$('#btnCreateAnother').addEventListener('click',function(){closeOverlay('#successOverlay');window.scrollTo({top:0,behavior:'smooth'});});
+$('#btnPreviewSuccess').addEventListener('click',function(){if(lastSuccess)openPreview(lastSuccess.payload);});
+function copyText(txt){
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(function(){toast('📋 Link copied!');},function(){fallbackCopy(txt);});}
+  else fallbackCopy(txt);
+}
+function fallbackCopy(txt){var ta=document.createElement('textarea');ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('📋 Link copied!');}catch(e){toast('😢 Copy failed — select it manually');}document.body.removeChild(ta);}
+
+/* ---------- my surprises ---------- */
+function getSaved(){try{return JSON.parse(localStorage.getItem(LS_SAVED)||'[]');}catch(e){return [];}}
+function saveSurprise(item){var l=getSaved();l.unshift(item);try{localStorage.setItem(LS_SAVED,JSON.stringify(l.slice(0,25)));}catch(e){}renderSaved();}
+function renderSaved(){
+  var list=$('#surpriseList'),items=getSaved();
+  if(!items.length){list.innerHTML='<li class="empty">No surprises saved yet — create your first one above! ✨</li>';return;}
+  list.innerHTML='';
+  items.forEach(function(it){
+    var li=document.createElement('li');li.className='sv-item';
+    var t=THEMES[it.theme]||THEMES.rainbow;
+    li.innerHTML='<span class="sv-dot" style="background:'+t.swatch+'"></span>'+
+      '<span><span class="sv-name">'+escapeHtml(it.name)+'</span> '+t.emoji+'<br><span class="sv-date">'+t.label+' · created '+fmtDate(it.created)+'</span></span>'+
+      '<span class="sv-pin">PIN: <b class="svpin-val">••••</b> <button class="btn btn-ghost btn-sm svpin-btn" type="button">👁</button></span>'+
+      '<span class="sv-actions"><a class="btn btn-ghost btn-sm" target="_blank" rel="noopener">Open ↗</a><button class="btn btn-ghost btn-sm sv-copy" type="button">📋</button><button class="btn btn-ghost btn-sm sv-del" type="button" aria-label="Delete">🗑</button></span>';
+    li.querySelector('a').href=it.url;
+    li.querySelector('.svpin-btn').addEventListener('click',function(){
+      var v=li.querySelector('.svpin-val'),show=v.textContent==='••••';v.textContent=show?it.pin:'••••';this.textContent=show?'🙈':'👁';
+    });
+    li.querySelector('.sv-copy').addEventListener('click',function(){copyText(it.url);});
+    li.querySelector('.sv-del').addEventListener('click',function(){
+      if(!confirm('Delete this saved surprise? (The link still works — it just disappears from this list.)'))return;
+      var l2=getSaved().filter(function(x){return x.id!==it.id;});
+      try{localStorage.setItem(LS_SAVED,JSON.stringify(l2));}catch(e){}
+      renderSaved();toast('🗑 Removed');
+    });
+    list.appendChild(li);
+  });
+}
+
+/* ---------- overlays ---------- */
+var previewTeardown=null,lastFocus=null;
+function openOverlay(sel,closeSel){lastFocus=document.activeElement;$(sel).hidden=false;$(closeSel).focus();}
+function closeOverlay(sel){$(sel).hidden=true;if(lastFocus)lastFocus.focus();}
+$('#btnCloseSuccess').addEventListener('click',function(){closeOverlay('#successOverlay');});
+$('#successOverlay').addEventListener('click',function(e){if(e.target===this)closeOverlay('#successOverlay');});
+$('#btnClosePreview').addEventListener('click',closePreview);
+$('#previewOverlay').addEventListener('click',function(e){if(e.target===this)closePreview();});
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){
+    if(!$('#previewOverlay').hidden)closePreview();
+    else if(!$('#successOverlay').hidden)closeOverlay('#successOverlay');
+  }
+});
+function closePreview(){if(previewTeardown){try{previewTeardown();}catch(e){}previewTeardown=null;}closeOverlay('#previewOverlay');}
+
+/* ---------- preview ---------- */
+function openPreview(payload){
+  $('#previewOverlay').hidden=false;if(!lastFocus)lastFocus=$('#btnPreview');$('#btnClosePreview').focus();
+  var root=$('#previewRoot');
+  previewTeardown=startExperience(payload,root,{requirePin:true});
+}
+$('#btnPreview').addEventListener('click',function(){
+  if(!validate())return;
+  openPreview(buildPayload());
+});
+
+/* ==================================================================
+   VIEWER EXPERIENCE (shared by real links + preview)
+   ================================================================== */
+function startExperience(payload,host,opts){
+  opts=opts||{};
+  var timeouts=[],intervals=[];
+  function TO(fn,ms){var id=setTimeout(fn,ms);timeouts.push(id);return id;}
+  function SI(fn,ms){var id=setInterval(fn,ms);intervals.push(id);return id;}
+  function teardown(){timeouts.forEach(clearTimeout);intervals.forEach(clearInterval);timeouts=[];intervals=[];host.innerHTML='';host.className='';}
+  teardown();
+  var T=THEMES[payload.t]||THEMES.rainbow;
+  host.className='viewer-root'+(payload.t==='space'?' has-stars':'');
+  Object.keys(T.vars).forEach(function(k){host.style.setProperty(k,T.vars[k]);});
+
+  function begin(){
+    if(payload.w&&Date.now()<payload.w)showCountdown(host,payload,T,TO,SI,afterWait,teardown);
+    else afterWait();
+  }
+  function afterWait(){
+    if(payload.g&&payload.g.on)gameIntro();
+    else showReveal(host,payload,T);
+  }
+  function gameIntro(){
+    host.innerHTML='';
+    var d=DIFFS[(payload.g&&payload.g.d)||'bunny']||DIFFS.bunny;
+    var required=payload.g&&payload.g.mode==='required';
+    var scr=el('<div class="v-screen"><div class="v-card">'+
+      '<div class="v-emoji">🎈</div><h2>Balloon Pop!</h2>'+
+      '<p style="margin-bottom:6px">Pop <strong>'+GAME_GOAL+' balloons</strong> before the <strong>'+GAME_TIME+'-second</strong> timer runs out to unlock the surprise!</p>'+
+      '<p class="v-sub">Difficulty: '+d.label+' — '+d.desc+'</p>'+
+      (required?'<p class="v-sub" style="font-weight:800">💪 Challenge mode — the sender says you MUST win to unlock!</p>':'')+
+      '<button class="btn btn-primary v-btn" data-act="play" style="background:linear-gradient(135deg,var(--vaccent),var(--vaccent2))">Let\'s play! 🎈</button>'+
+      (required?'':'<button class="btn btn-ghost v-btn" data-act="skip">Skip the game 😇</button>')+
+      '<p class="v-sub" style="margin-top:14px;font-size:.75rem">♿ Keyboard: Tab to balloons, Enter to pop. '+
+      '<button class="btn btn-ghost btn-sm" data-act="mute" style="margin-top:6px">'+(soundMuted?'🔇 Sound off':'🔊 Sound on')+'</button></p>'+
+      '</div></div>');
+    host.appendChild(scr);
+    scr.addEventListener('click',function(e){
+      var act=e.target.closest('[data-act]');if(!act)return;
+      if(act.dataset.act==='play'){audioCtx();startGame();}
+      else if(act.dataset.act==='skip'){showReveal(host,payload,T);}
+      else if(act.dataset.act==='mute'){soundMuted=!soundMuted;act.textContent=soundMuted?'🔇 Sound off':'🔊 Sound on';}
+    });
+  }
+  function startGame(){
+    runGame(host,payload,T,{SI:SI,TO:TO,
+      onWin:function(){TO(function(){showReveal(host,payload,T);},1700);},
+      onRetry:function(){startGame();},
+      onGiveUp:function(){showReveal(host,payload,T);},
+      onQuitIntro:function(){gameIntro();}
+    });
+  }
+  if(opts.requirePin){
+    buildPinScreen(host,'Type the secret 4-digit PIN',function(pin,done){
+      if(pin===String(payload.pin)){TO(function(){begin();},250);done(true);}
+      else done(false);
+    },teardown);
+  } else begin();
+  return teardown;
+}
+function el(html){var d=document.createElement('div');d.innerHTML=html;return d.firstElementChild;}
+
+/* ---------- PIN screen ---------- */
+function buildPinScreen(host,subtitle,verify,teardown){
+  if(teardown)teardown();
+  host.className='viewer-root';
+  host.style.setProperty('--vbg','linear-gradient(160deg,#667eea 0%,#a15cff 55%,#ff5e7d 100%)');
+  host.style.setProperty('--vcard','#fff');host.style.setProperty('--vink','#3b2a4a');host.style.setProperty('--vsub','#7c6a8f');
+  host.style.setProperty('--vaccent','#ff5e7d');host.style.setProperty('--vaccent2','#a15cff');
+  var scr=el('<div class="v-screen"><div class="v-card">'+
+    '<div class="v-emoji">🔒</div><h2>A surprise awaits…</h2>'+
+    '<p class="v-sub">'+escapeHtml(subtitle)+'<br>Tip: your keyboard number keys work too.</p>'+
+    '<div class="pin-boxes" role="group" aria-label="Secret PIN, 4 digits"></div>'+
+    '<p class="pin-error" role="alert"></p>'+
+    '<button class="btn btn-primary v-btn" data-act="go" style="background:linear-gradient(135deg,#ff5e7d,#a15cff)">Unwrap the surprise 🎁</button>'+
+    '</div></div>');
+  var boxes=scr.querySelector('.pin-boxes');
+  for(var i=0;i<4;i++){
+    var inp=document.createElement('input');
+    inp.className='pin-digit';inp.type='text';inp.inputMode='numeric';inp.maxLength=1;inp.autocomplete='off';
+    inp.setAttribute('aria-label','PIN digit '+(i+1));
+    boxes.appendChild(inp);
+  }
+  var digits=boxes.querySelectorAll('.pin-digit');
+  var errEl=scr.querySelector('.pin-error'),busy=false;
+  host.appendChild(scr);
+  setTimeout(function(){digits[0].focus();},150);
+  function current(){var s='';digits.forEach(function(d){s+=d.value;});return s;}
+  function fail(msg){
+    errEl.textContent=msg;
+    if(!reducedMotion.matches){scr.querySelector('.v-card').classList.add('shake');setTimeout(function(){scr.querySelector('.v-card').classList.remove('shake');},450);}
+    digits.forEach(function(d){d.value='';});digits[0].focus();
+  }
+  function submit(){
+    if(busy)return;var pin=current();
+    if(pin.length!==4){fail('Enter all 4 digits 🔢');return;}
+    busy=true;errEl.textContent='Unlocking… 🔓';
+    Promise.resolve(verify(pin,function(ok){
+      busy=false;
+      if(ok===true){errEl.textContent='';}
+      else if(ok==='broken'){showBroken(host,'😢 The surprise inside this link could not be read. Maybe a character got lost on the way, or it was built with a newer version.');}
+      else fail('Wrong PIN — try again! 🙈');
+    })).catch(function(){busy=false;fail('Wrong PIN — try again! 🙈');});
+  }
+  digits.forEach(function(d,idx){
+    d.addEventListener('input',function(){
+      d.value=d.value.replace(/\D/g,'').slice(0,1);
+      if(d.value&&idx<3)digits[idx+1].focus();
+      if(current().length===4)submit();
+    });
+    d.addEventListener('keydown',function(e){
+      if(e.key==='Backspace'&&!d.value&&idx>0){digits[idx-1].focus();digits[idx-1].value='';e.preventDefault();}
+      if(e.key==='Enter')submit();
+      if(e.key==='ArrowLeft'&&idx>0)digits[idx-1].focus();
+      if(e.key==='ArrowRight'&&idx<3)digits[idx+1].focus();
+    });
+    d.addEventListener('paste',function(e){
+      e.preventDefault();
+      var txt=(e.clipboardData||window.clipboardData).getData('text').replace(/\D/g,'').slice(0,4);
+      for(var j=0;j<txt.length&&j<4;j++)digits[j].value=txt[j];
+      if(txt.length===4)submit();else if(txt.length)digits[Math.min(txt.length,3)].focus();
+    });
+  });
+  scr.addEventListener('click',function(e){if(e.target.closest('[data-act=go]'))submit();});
+}
+
+/* ---------- countdown ---------- */
+function showCountdown(host,payload,T,TO,SI,next,teardown){
+  host.innerHTML='';
+  var scr=el('<div class="v-screen"><div class="v-card">'+
+    '<div class="v-emoji">⏳</div><h2>Not yet!</h2>'+
+    '<p class="v-sub">This surprise magically unlocks at<br><strong style="color:var(--vink)">'+escapeHtml(fmtDate(payload.w))+'</strong></p>'+
+    '<div class="countdown" role="timer" aria-live="polite">--:--:--</div>'+
+    '<p class="v-sub" style="margin-top:14px">Come back later — suspense is part of the fun! 🎁</p>'+
+    '</div></div>');
+  host.appendChild(scr);
+  var cd=scr.querySelector('.countdown');
+  function tick(){
+    var diff=payload.w-Date.now();
+    if(diff<=0){iv&&clearInterval(iv);confettiWaves(T.balloons);TO(next,900);return;}
+    var d=Math.floor(diff/86400000),h=Math.floor(diff%86400000/3600000),m=Math.floor(diff%3600000/60000),s=Math.floor(diff%60000/1000);
+    cd.textContent=(d?d+'d ':'')+String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  }
+  tick();var iv=SI(tick,1000);
+}
+
+/* ---------- balloon game ---------- */
+function runGame(host,payload,T,timers){
+  host.innerHTML='';
+  var cfg=DIFFS[(payload.g&&payload.g.d)||'bunny']||DIFFS.bunny;
+  var required=payload.g&&payload.g.mode==='required';
+  var wrap=el('<div class="game-wrap">'+
+    '<div class="game-hud">'+
+      '<span class="hud-pill hud-time">⏱ <b>'+GAME_TIME+'</b></span>'+
+      '<span class="hud-pill hud-count">🎈 <b>0</b>/'+GAME_GOAL+'</span>'+
+      '<button class="hud-btn" data-act="mute" aria-label="Toggle sound">'+(soundMuted?'🔇':'🔊')+'</button>'+
+      '<button class="hud-btn" data-act="quit" aria-label="Leave game" style="margin-left:4px">✕</button>'+
+    '</div>'+
+    '<div class="game-area" role="application" aria-label="Balloon pop game. Balloons are buttons — tab to them and press Enter, or tap to pop."></div>'+
+    '<p class="sr-only" aria-live="polite" data-status></p>'+
+    '</div>');
+  host.appendChild(wrap);
+  var area=wrap.querySelector('.game-area');
+  var timeB=wrap.querySelector('.hud-time b'),countB=wrap.querySelector('.hud-count b');
+  var timePill=wrap.querySelector('.hud-time'),statusEl=wrap.querySelector('[data-status]');
+  var popped=0,left=GAME_TIME,active=0,running=true,spawnTO=null,tickIV=null;
+  timers.timeouts=[];timers.timeouts.push=Array.prototype.push; // keep ref
+  var localTO=[],localIV=[];
+  function TO2(fn,ms){var id=setTimeout(function(){if(running||true)fn();},ms);localTO.push(id);return id;}
+  function SI2(fn,ms){var id=setInterval(fn,ms);localIV.push(id);return id;}
+  function stop(){running=false;localTO.forEach(clearTimeout);localIV.forEach(clearInterval);}
+  timers.timeouts.push.apply?0:0;
+  // register cleanup with experience timers
+  timers.SI(function(){},1e9); // no-op safeguard removed below
+  // simpler: hook into host teardown via timers lists already cleared; also clear locally on end
+  function announce(msg){statusEl.textContent=msg;}
+  announce('Game started! Pop '+GAME_GOAL+' balloons in '+GAME_TIME+' seconds.');
+  function spawn(){
+    if(!running)return;
+    if(active<12){
+      active++;
+      var bw=document.createElement('div');bw.className='bwrap';
+      var b=document.createElement('button');b.type='button';b.className='balloon';
+      b.setAttribute('aria-label','Balloon — press Enter to pop');
+      var color=T.balloons[Math.floor(Math.random()*T.balloons.length)];
+      b.style.setProperty('--bcolor',color);
+      var str=document.createElement('span');str.className='bstr';b.appendChild(str);
+      bw.appendChild(b);
+      bw.style.left=rand(3,88)+'%';
+      bw.style.animationDuration=rand(cfg.rise[0],cfg.rise[1]).toFixed(2)+'s';
+      b.style.animationDuration=rand(2.2,3.6).toFixed(2)+'s';
+      area.appendChild(bw);
+      var poppedOne=false;
+      function doPop(e){
+        if(poppedOne||!running)return;poppedOne=true;active--;popped++;
+        var r=b.getBoundingClientRect();
+        var ox=(r.left+r.width/2)/window.innerWidth,oy=(r.top+r.height/2)/window.innerHeight;
+        popSound();confettiAt(ox,oy,color);
+        bw.classList.add('popped');b.innerHTML='';
+        countB.textContent=popped;
+        if(popped%5===0)announce(popped+' of '+GAME_GOAL+' balloons popped!');
+        setTimeout(function(){bw.remove();},320);
+        if(popped>=GAME_GOAL)win();
+      }
+      b.addEventListener('pointerdown',function(e){e.preventDefault();doPop();});
+      b.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();doPop();}});
+      bw.addEventListener('animationend',function(){if(!poppedOne){bw.remove();active--;}});
+    }
+    spawnTO=TO2(spawn,cfg.spawn+rand(0,320));
+  }
+  function tick(){
+    if(!running)return;
+    left--;timeB.textContent=left;
+    if(left<=5){timePill.classList.add('urgent');announce(left+' seconds left!');}
+    if(left<=0)lose();
+  }
+  function win(){
+    if(!running)return;stop();
+    winSound();confettiWaves(T.balloons);
+    endCard('<div class="big">🎉</div><h2>You popped them all!</h2><p class="v-sub">Get ready… your surprise is unlocking!</p>');
+    announce('You won! '+GAME_GOAL+' balloons popped!');
+    timers.TO(function(){},10); // no-op
+    // reveal handled by callbacks registered below
+    if(onWinCb)onWinCb();
+  }
+  function lose(){
+    if(!running)return;stop();
+    announce('Time is up! You popped '+popped+' of '+GAME_GOAL+'.');
+    endCard('<div class="big">😢</div><h2>Time\'s up!</h2><p class="v-sub">You popped <strong>'+popped+'/'+GAME_GOAL+'</strong> — so close!</p>'+
+      '<button class="btn btn-primary v-btn" data-act="retry" style="background:linear-gradient(135deg,var(--vaccent),var(--vaccent2))">Try again! 💪</button>'+
+      (required?'<p class="v-sub" style="margin-top:10px">Challenge mode: pop all '+GAME_GOAL+' to unlock! 🔒</p>':'<button class="btn btn-ghost v-btn" data-act="giveup">Open the surprise anyway 😇</button>'));
+  }
+  function endCard(html){
+    host.innerHTML='';
+    var scr=el('<div class="v-screen"><div class="v-card end-card">'+html+'</div></div>');
+    scr.addEventListener('click',function(e){
+      var act=e.target.closest('[data-act]');if(!act)return;
+      if(act.dataset.act==='retry')onRetryCb&&onRetryCb();
+      if(act.dataset.act==='giveup')onGiveUpCb&&onGiveUpCb();
+    });
+    host.appendChild(scr);
+  }
+  var onWinCb=timers.onWin,onRetryCb=timers.onRetry,onGiveUpCb=timers.onGiveUp;
+  wrap.addEventListener('click',function(e){
+    var act=e.target.closest('[data-act]');if(!act)return;
+    if(act.dataset.act==='mute'){soundMuted=!soundMuted;act.textContent=soundMuted?'🔇':'🔊';}
+    if(act.dataset.act==='quit'){stop();
+      endCard('<div class="big">🎈</div><h2>Left the game</h2><p class="v-sub">No worries!</p>'+
+        '<button class="btn btn-primary v-btn" data-act="retry" style="background:linear-gradient(135deg,var(--vaccent),var(--vaccent2))">Play again 🔁</button>'+
+        (required?'':'<button class="btn btn-ghost v-btn" data-act="giveup">Open the surprise 😇</button>'));
+    }
+  });
+  tickIV=SI2(tick,1000);
+  spawn();
+  // expose stop to experience teardown by wrapping host.innerHTML clear listener:
+  var mo=new MutationObserver(function(){if(!document.body.contains(area)){stop();mo.disconnect();}});
+  mo.observe(document.body,{childList:true,subtree:true});
+}
+
+/* ---------- reveal ---------- */
+function showReveal(host,payload,T){
+  host.innerHTML='';
+  var scr=el('<div class="v-screen"><div class="v-card">'+
+    '<p class="r-kicker">🎉 A message just for you 🎉</p>'+
+    '<h1 class="r-name">'+escapeHtml(payload.n)+'</h1>'+
+    '<div class="r-emoji">🎂 🎈 🎁</div>'+
+    '<div class="r-msg">'+renderMessage(payload.m)+'</div>'+
+    '<div class="r-actions">'+
+      '<button class="btn btn-primary btn-sm" data-act="more" style="background:linear-gradient(135deg,var(--vaccent),var(--vaccent2))">More confetti! 🎊</button>'+
+      '<a class="btn btn-ghost btn-sm" href="'+escapeHtml(baseUrl())+'">Make your own surprise ✨</a>'+
+    '</div>'+
+    '<p class="r-lock">🔓 Unlocked with the secret PIN · sent with 💖</p>'+
+    '</div></div>');
+  host.appendChild(scr);
+  confettiWaves(T.balloons);
+  setTimeout(function(){confettiBurst(T.balloons,{origin:{x:0.5,y:0.3},spread:90,count:100});},700);
+  scr.addEventListener('click',function(e){if(e.target.closest('[data-act=more]'))confettiWaves(T.balloons);});
+  scr.querySelector('.r-name').setAttribute('tabindex','-1');
+  scr.querySelector('.r-name').focus&&setTimeout(function(){},0);
+}
+
+/* ---------- broken link ---------- */
+function showBroken(host,reason){
+  host.className='viewer-root';
+  host.style.setProperty('--vbg','linear-gradient(160deg,#8e9eab 0%,#a18cd1 100%)');
+  host.style.setProperty('--vcard','#fff');host.style.setProperty('--vink','#3b2a4a');host.style.setProperty('--vsub','#7c6a8f');
+  host.innerHTML='';
+  var scr=el('<div class="v-screen"><div class="v-card">'+
+    '<div class="v-emoji">🎈💨</div><h2>Oh no, this link is broken 😢</h2>'+
+    '<p class="v-sub">'+escapeHtml(reason||'The surprise inside this link could not be read. Maybe a character got lost on the way.')+'</p>'+
+    '<a class="btn btn-primary v-btn" href="'+escapeHtml(baseUrl())+'" style="display:inline-block;text-decoration:none;background:linear-gradient(135deg,#ff5e7d,#a15cff)">Build a new surprise ✨</a>'+
+    '</div></div>');
+  host.appendChild(scr);
+}
+
+/* ==================================================================
+   BOOT — real link handling
+   ================================================================== */
+(function boot(){
+  updateProgress();renderSaved();
+  var params=new URLSearchParams(location.search);
+  var sParam=params.get('s'),dParam=params.get('d');
+  if(!sParam&&!dParam)return; // creator mode
+  document.body.classList.add('viewer-mode');
+  var host=$('#viewer');
+  if(sParam){
+    if(!cryptoReady()){showBroken(host,'This surprise uses strong browser encryption (Web Crypto), which this browser or connection doesn\'t support. Try opening it in a modern browser over HTTPS.');return;}
+    buildPinScreen(host,'Type the secret 4-digit PIN',function(pin,done){
+      decryptPayload(sParam,pin).then(function(payload){
+        done(true);
+        startExperience(payload,host,{requirePin:false});
+      }).catch(function(err){
+        if(err&&err.name==='OperationError')done(false);
+        else done('broken');
+      });
+    });
+  } else {
+    var payload=decompressJson(dParam);
+    if(!payload){showBroken(host);return;}
+    buildPinScreen(host,'Type the secret 4-digit PIN',function(pin,done){
+      if(payload.ph&&hashPin(pin)!==payload.ph){done(false);return;}
+      done(true);
+      startExperience(payload,host,{requirePin:false});
+    });
+  }
+})();
+})();
+</script>
+</body>
+</html>
